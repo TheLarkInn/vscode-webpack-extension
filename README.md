@@ -1,0 +1,1 @@
+# vscode-webpack-extension

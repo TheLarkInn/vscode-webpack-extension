@@ -1,0 +1,40 @@
+{
+  "name": "vscode-webpack-extension",
+  "version": "1.0.0",
+  "license": "MIT",
+  "dependencies": {
+    "@types/node": "^10.5.1",
+    "html-webpack-plugin": "^3.2.0",
+    "vscode": "^1.1.18",
+    "webpack": "^4.13.0",
+    "webpack-merge": "^4.1.3",
+    "webpack-serve": "^1.0.4"
+  },
+  "publisher": "Sean Larkin <sean.larkin@microsoft.com>",
+  "main": "./src/extension.js",
+  "activationEvents": [
+    "onCommand:extension.sayHello",
+    "workspaceContains:**/webpack.config.js",
+    "workspaceContains:./src/index.js",
+    "onLanguage:javascript",
+    "onLanguage:typescript"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.webpackBuild",
+        "title": "Webpack Build"
+      },
+      {
+        "command": "extension.webpackServe",
+        "title": "Webpack Serve"
+      }
+    ]
+  },
+  "scripts": {
+    "postinstall": "node ./node_modules/vscode/bin/install"
+  },
+  "engines": {
+    "vscode": "^1.22.0"
+  }
+}
