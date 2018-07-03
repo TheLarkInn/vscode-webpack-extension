@@ -1,11 +1,9 @@
 const vscode = require("vscode");
+const LanguageClientDispatcher = require("./languageClientDispatcher");
 
 /** @typedef {import('webpack/lib/Compiler.js')} Compiler */
 /** @typedef {import('webpack/lib/Stats.js')} Stats */
-
-/**
- * @typedef {(stats: Stats, compiler: Compiler) => void} CompilerCallback
- */
+/** @typedef {(stats: Stats, compiler: Compiler) => void} CompilerCallback */
 
 const {
   workspace,
@@ -14,14 +12,20 @@ const {
 } = vscode;
 
 let webpackLanguageClient;
+let browserCoverageClient;
 
 /**
  * @param {vscode.ExtensionContext} context
  */
 const activate = context => {
-  const { create } = require("./servers/webpackLanguageClient");
-  webpackLanguageClient = create(workspace, context);
-  webpackLanguageClient.start();
+  const wlc = require("./servers/webpackLanguageClient");
+  const bcc = require("./servers/browserCoverageClient");
+
+  webpackLanguageClient = wlc.create(workspace, context);
+  browserCoverageClient = bcc.create(workspace, context);
+
+  const dispatcher = new LanguageClientDispatcher(webpackLanguageClient, browserCoverageClient);
+  dispatcher.startAll();
 };
 
 /**
