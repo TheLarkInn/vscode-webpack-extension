@@ -13,7 +13,7 @@ const { LanguageClient, TransportKind } = require("vscode-languageclient");
  */
 const create = (workspace, context) => {
   const serverModule = context.asAbsolutePath(path.join("src", "servers", "browserCoverageServer.js"));
-  const debugOptions = { execArgv: ["--nolazy", "--inspect=6010"] };
+  const debugOptions = { execArgv: ["--nolazy", "--inspect=6008"] };
   /** @type {ServerOptions} */
   const serverOptions = {
     run: { module: serverModule, transport: TransportKind.ipc },

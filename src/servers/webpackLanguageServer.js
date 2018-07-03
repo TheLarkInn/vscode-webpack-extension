@@ -2,6 +2,7 @@ const webpack = require("webpack");
 const webpackServe = require("webpack-serve");
 const webpackMerge = require("webpack-merge");
 const makeWebpackCompiler = require("../build/makeWebpackCompiler");
+const { WLS } = require("../events");
 
 const { DidChangeConfigurationNotification, TextDocuments, ProposedFeatures, createConnection } = require("vscode-languageserver");
 
@@ -50,24 +51,28 @@ connection.onInitialized(async params => {
   }
 
   let { compiler, config } = makeWebpackCompiler(workspacePath, "development");
-
   webpackCompilerInstance = compiler;
+
   try {
     webpackDevServerInstance = await webpackServe({ config });
     webpackDevServerInstance.on("listening", ({ server, options }) => {
       console.info("webpack server started");
+      connection.sendNotification(WLS.WEBPACK_SERVE_STARTED);
     });
 
     webpackDevServerInstance.on("build-finished", ({ stats, compiler }) => {
       console.log("Build Finished Event", stats);
+      connection.sendNotification(WLS.WEBPACK_SERVE_BUILD_SUCCESS, { stats: stats.toJson() });
     });
 
     webpackDevServerInstance.on("compiler-error", ({ stats, compiler }) => {
       console.error(stats);
+      connection.sendNotification(WLS.WEBPACK_SERVE_BUILD_ERROR, { stats: stats.toJson() });
     });
 
     webpackDevServerInstance.on("compiler-warning", ({ stats, compiler }) => {
       console.warn(stats);
+      connection.sendNotification(WLS.WEBPACK_SERVE_BUILD_WARNING, { stats: stats.toJson() });
     });
 
     documents.onDidSave(event => {
@@ -79,6 +84,7 @@ connection.onInitialized(async params => {
           webpackCompilerInstance = compiler;
           webpackDevServerInstance = await webpackServe({ config });
         });
+        connection.sendNotification(WLS.WEBPACK_CONFIG_CHANGED, { event });
       }
     });
   } catch (error) {

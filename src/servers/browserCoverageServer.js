@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const { DidChangeConfigurationNotification, TextDocuments, ProposedFeatures, createConnection } = require("vscode-languageserver");
 const puppeteer = require("puppeteer");
 
@@ -11,14 +13,29 @@ let hasDiagnosticRelatedInformationCapability = false;
 let workspacePath;
 /** @type {string=} */
 let workspaceUri;
+/** @type {string=} */
+let chromiumPath;
 let puppetteerInstance;
 let browser;
 let page;
 
-connection.onInitialize(async params => {
-  const { capabilities, rootPath, rootUri } = params;
-  browser = await puppeteer.launch();
+/**
+ * @returns {string}
+ */
+const getChromiumExecutable = () => {
+  const localNodeModules = path.resolve(__dirname, path.join("..", "..", "node_modules"));
+  const chromiumPath = path.resolve(localNodeModules, path.join("puppeteer", ".local-chromium"));
+  const subDirs = fs.readdirSync(chromiumPath);
+  if (subDirs.length) {
+    console.info("THE CHOMIUM EXECUTABLE LINUX REVISION SUBDIR:", subDirs);
+    return path.join(chromiumPath, subDirs[0], "chrome-linux", "chrome");
+  } else {
+    throw new Error("Couldn't find chrome executable due to missing revision number");
+  }
+};
 
+connection.onInitialize(params => {
+  const { capabilities, rootPath, rootUri } = params;
   workspacePath = rootPath;
   workspaceUri = rootUri;
 
@@ -36,7 +53,14 @@ connection.onInitialize(async params => {
   };
 });
 
-connection.onInitialized(params => {
+connection.onInitialized(async params => {
+  try {
+    browser = await puppeteer.launch({ executablePath: getChromiumExecutable(), args: ["--no-sandbox", "--disable-setuid-sandbox"] });
+    console.log(browser);
+  } catch (error) {
+    console.error(error);
+  }
+
   if (hasConfigurationCapability) {
     // Register for all conifiguration changes.
     connection.client.register(DidChangeConfigurationNotification.type, undefined);
@@ -50,7 +74,7 @@ connection.onInitialized(params => {
 });
 
 connection.onNotification("Build Finished", ({ uri, stats }) => {
-  console.log(params);
+  // Start running coverage
 });
 
 connection.listen();

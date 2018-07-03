@@ -52,6 +52,20 @@ class LanguageClientDispatcher {
   startAll() {
     return Array.from(this._languageClients).map(languageClient => languageClient.start());
   }
+
+  /**
+   * @param {string} message
+   * @param {(params: any, issuer: LanguageClient) => void} handler
+   */
+  onNotification(message, handler) {
+    each(Array.from(this._languageClients), languageClient => {
+      languageClient.onReady().then(() => {
+        languageClient.onNotification(message, params => {
+          handler(params, languageClient);
+        });
+      });
+    });
+  }
 }
 
 module.exports = LanguageClientDispatcher;

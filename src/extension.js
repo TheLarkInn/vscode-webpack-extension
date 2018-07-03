@@ -1,3 +1,5 @@
+const { WLS } = require("./events");
+
 const vscode = require("vscode");
 const LanguageClientDispatcher = require("./languageClientDispatcher");
 
@@ -25,6 +27,12 @@ const activate = context => {
   browserCoverageClient = bcc.create(workspace, context);
 
   const dispatcher = new LanguageClientDispatcher(webpackLanguageClient, browserCoverageClient);
+  dispatcher.onNotification(WLS.WEBPACK_SERVE_BUILD_SUCCESS, (params, issuer) => {
+    const { stats } = params;
+
+    console.log(params);
+  });
+
   dispatcher.startAll();
 };
 
