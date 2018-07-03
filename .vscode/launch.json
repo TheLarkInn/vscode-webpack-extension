@@ -5,12 +5,27 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Webpack Language Server",
+      "address": "localhost",
+      "protocol": "inspector",
+      "port": 6009,
+      "outFiles": ["${workspaceRoot}/src/**/*.js"]
+    },
+    {
       "type": "extensionHost",
       "request": "launch",
       "name": "Launch Extension",
       "runtimeExecutable": "${execPath}",
       "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
       "outFiles": ["${workspaceFolder}/src/**/*.js"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Client + Server",
+      "configurations": ["Launch Extension", "Attach to Webpack Language Server"]
     }
   ]
 }
