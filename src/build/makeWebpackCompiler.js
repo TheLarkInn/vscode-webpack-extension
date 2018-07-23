@@ -3,10 +3,13 @@ const webpack = require("webpack");
 const webpackMerge = require("webpack-merge");
 const defaultConfig = require("./webpack.config");
 
+/** @typedef {import("webpack/lib/Compiler")} Compiler */
+/** @typedef {import("webpack")} WebpackConfig */
+
 /**
- *
  * @param {string} contextPath
  * @param {"production"|"development"|"none"} mode
+ * @returns {{compiler: Compiler, config: WebpackConfig}}
  */
 const makeWebpackCompiler = (contextPath, mode) => {
   let config;
