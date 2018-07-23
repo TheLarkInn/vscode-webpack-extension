@@ -7,28 +7,19 @@
     {
       "type": "node",
       "request": "attach",
+      "name": "Attach to Webpack Production Server",
+      "address": "localhost",
+      "protocol": "inspector",
+      "port": 6006,
+      "outFiles": ["${workspaceRoot}/src/servers/**/*.js"]
+    },
+    {
+      "type": "node",
+      "request": "attach",
       "name": "Attach to Code Deployment Language Server",
       "address": "localhost",
       "protocol": "inspector",
       "port": 6007,
-      "outFiles": ["${workspaceRoot}/src/servers/**/*.js"]
-    },
-    {
-      "type": "node",
-      "request": "attach",
-      "name": "Attach to Webpack Language Server",
-      "address": "localhost",
-      "protocol": "inspector",
-      "port": 6009,
-      "outFiles": ["${workspaceRoot}/src/servers/**/*.js"]
-    },
-    {
-      "type": "node",
-      "request": "attach",
-      "name": "Attach to Webpack Language Server",
-      "address": "localhost",
-      "protocol": "inspector",
-      "port": 6009,
       "outFiles": ["${workspaceRoot}/src/servers/**/*.js"]
     },
     {
@@ -43,10 +34,10 @@
     {
       "type": "node",
       "request": "attach",
-      "name": "Attach to Webpack Production Server",
+      "name": "Attach to Webpack Language Server",
       "address": "localhost",
       "protocol": "inspector",
-      "port": 6006,
+      "port": 6009,
       "outFiles": ["${workspaceRoot}/src/servers/**/*.js"]
     },
     {
@@ -70,6 +61,10 @@
     {
       "name": "Client + Browser Server",
       "configurations": ["Launch Extension", "Attach to Browser Coverage Server"]
+    },
+    {
+      "name": "Client + Webpack Production Server",
+      "configurations": ["Launch Extension", "Attach to Webpack Production Server"]
     },
     {
       "name": "All",
