@@ -12,14 +12,28 @@ const makeWebpackCompiler = (contextPath, mode) => {
   let config;
   const context = path.resolve(contextPath);
   const configFile = path.join(context, "webpack.config.js");
+
   try {
     config = require(configFile);
+    /**
+     * This allows us to recieve changes from the
+     * config insteaed of pulling existing config
+     * from require cache.
+     */
     delete require.cache[require.resolve(configFile)];
   } catch (error) {
-    console.info("Cannot find user's webpack configuration in workspace.\n Falling back to default extension options");
+    /**
+     * If we can't find the users config, lets swallow it and then
+     * pass in our own sane default that supports some generic functionality
+     */
+    console.info("Cannot find user's webpack configuration in workspace.\n Falling back to default extension options", error);
     config = require("./webpack.config");
   }
 
+  /**
+   * If the config is a function that returns a config
+   * let's at the least pass in the env (in this case {mode})
+   */
   if (typeof config === "function") {
     config = config({ mode });
     console.log(config);
