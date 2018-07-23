@@ -29,7 +29,7 @@ const activate = context => {
   browserCoverageClient = bcc.create(workspace, context);
   codeDeploymentClient = cdc.create(workspace, context);
 
-  const dispatcher = new LanguageClientDispatcher(webpackLanguageClient, browserCoverageClient);
+  const dispatcher = new LanguageClientDispatcher(webpackLanguageClient, browserCoverageClient, codeDeploymentClient);
   dispatcher.onNotification(WLS.WEBPACK_SERVE_BUILD_SUCCESS, (params, issuer) => {
     const { stats } = params;
 

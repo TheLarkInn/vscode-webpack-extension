@@ -42,7 +42,8 @@ connection.onInitialized(async params => {
 });
 
 connection.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, ({ uri, stats }) => {
-  // Start running coverage
+  // Start deployment
+  console.log("prod build success");
 
 });
 
