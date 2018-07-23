@@ -1,6 +1,6 @@
 const webpack = require("webpack");
 const webpackMerge = require("webpack-merge");
-const fs = require("../fs.js");
+const MemoryFileSystem = require("memory-fs");
 
 const makeWebpackCompiler = require("../build/makeWebpackCompiler");
 const { WLS } = require("../events");
@@ -14,6 +14,7 @@ let documents = new TextDocuments();
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
+let fs;
 
 /** @type {string=} */
 let workspacePath;
@@ -56,7 +57,7 @@ connection.onInitialized(async params => {
 
   /** @type {Compiler} */
   webpackCompilerInstance = compiler;
-  webpackCompilerInstance.outputFileSystem = fs;
+  fs = webpackCompilerInstance.outputFileSystem = new MemoryFileSystem();
 });
 
 connection.onNotification(WLS.WEBPACK_SERVE_BUILD_SUCCESS, params => {
@@ -64,7 +65,7 @@ connection.onNotification(WLS.WEBPACK_SERVE_BUILD_SUCCESS, params => {
     if (err !== null) {
       connection.sendNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_ERROR, { stats: stats.toJson() });
     } else {
-      connection.sendNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, { stats: stats.toJson() });
+      connection.sendNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, { stats: stats.toJson(), fs });
     }
   });
 });
