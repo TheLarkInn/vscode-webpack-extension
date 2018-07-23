@@ -15,6 +15,7 @@ const {
 
 let webpackLanguageClient;
 let browserCoverageClient;
+let webpackProductionClient;
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -22,12 +23,16 @@ let browserCoverageClient;
 const activate = context => {
   const wlc = require("./servers/webpackLanguageClient");
   const bcc = require("./servers/browserCoverageClient");
+  const wpc = require("./servers/webpackProductionClient");
 
   webpackLanguageClient = wlc.create(workspace, context);
   browserCoverageClient = bcc.create(workspace, context);
+  webpackProductionClient = wpc.create(workspace, context);
 
-  const dispatcher = new LanguageClientDispatcher(webpackLanguageClient, browserCoverageClient);
+  const dispatcher = new LanguageClientDispatcher(webpackLanguageClient, browserCoverageClient, webpackProductionClient);
   dispatcher.onNotification(WLS.WEBPACK_SERVE_BUILD_SUCCESS, (params, issuer) => {
+    dispatcher.dispatch(WLS.WEBPACK_SERVE_BUILD_SUCCESS, params);
+
     const { stats } = params;
 
     console.log(params);
