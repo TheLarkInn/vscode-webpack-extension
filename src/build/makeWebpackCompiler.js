@@ -20,6 +20,11 @@ const makeWebpackCompiler = (contextPath, mode) => {
     config = require("./webpack.config");
   }
 
+  if (typeof config === "function") {
+    config = config({ mode });
+    console.log(config);
+  }
+
   const modules = ["node_modules", path.resolve(context, "../node_modules"), path.resolve(__dirname, "../../node_modules")];
   const compilerOptions = webpackMerge(defaultConfig, config, {
     context,
