@@ -1,8 +1,7 @@
 const { WLS } = require("./events");
-
+const { rehydrateFs } = require("./fsUtils");
 const vscode = require("vscode");
 const LanguageClientDispatcher = require("./languageClientDispatcher");
-const fs = require("./fs.js");
 
 /** @typedef {import('webpack/lib/Compiler.js')} Compiler */
 /** @typedef {import('webpack/lib/Stats.js')} Stats */
@@ -51,7 +50,8 @@ const activate = context => {
   dispatcher.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, (params, issuer) => {
     dispatcher.dispatch(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, params);
 
-    console.log(params, fs);
+    const fs = rehydrateFs(params.fs);
+    console.log(fs.readdirSync(params.stats.outputPath));
   });
 
   dispatcher.startAll();
