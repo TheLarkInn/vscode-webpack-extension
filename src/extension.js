@@ -15,6 +15,7 @@ const {
 
 let webpackLanguageClient;
 let browserCoverageClient;
+let codeDeploymentClient;
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -22,9 +23,11 @@ let browserCoverageClient;
 const activate = context => {
   const wlc = require("./servers/webpackLanguageClient");
   const bcc = require("./servers/browserCoverageClient");
+  const cdc = require("./servers/codeDeploymentClient");
 
   webpackLanguageClient = wlc.create(workspace, context);
   browserCoverageClient = bcc.create(workspace, context);
+  codeDeploymentClient = cdc.create(workspace, context);
 
   const dispatcher = new LanguageClientDispatcher(webpackLanguageClient, browserCoverageClient);
   dispatcher.onNotification(WLS.WEBPACK_SERVE_BUILD_SUCCESS, (params, issuer) => {

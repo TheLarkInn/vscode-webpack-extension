@@ -27,3 +27,5 @@ Stories for this pillar will involve:
   - Create TreeViews that list all the modules in your build and show "what led to this module being included in ones bundle?".
 
 #### Deployment
+
+Since webpack and tooling today allows you to create a static site and generate the needed html, css, js assets in a single build, we should round out the experience by allowing developers with a single command "code deploy" spin up their static sites to an anonymous Azure Storage hosting provider. Think of `zeit now` npm module which lets you type `now` in the command line to spin up your application with no effort.
