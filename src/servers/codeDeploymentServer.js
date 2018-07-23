@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { rehydrateFs } = require("../fsUtils");
 const { DidChangeConfigurationNotification, TextDocuments, ProposedFeatures, createConnection } = require("vscode-languageserver");
 const { WLS } = require("../events");
 
@@ -38,13 +39,15 @@ connection.onInitialize(params => {
 
 connection.onInitialized(async params => {
   console.log("initialize"); 
-
 });
 
-connection.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, ({ uri, stats }) => {
-  // Start deployment
-  console.log("prod build success");
 
+connection.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, (params, issuer) => {
+  const fs = rehydrateFs(params.fs);
+  console.log(fs.readdirSync(params.stats.outputPath));
+
+  // create blob is it doesnt exist
+  // upload files to blob
 });
 
 connection.listen();
