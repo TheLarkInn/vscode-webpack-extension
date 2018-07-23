@@ -1,4 +1,4 @@
-const { WLS } = require("./events");
+const { BCS, WLS } = require("./events");
 const { rehydrateFs } = require("./fsUtils");
 const vscode = require("vscode");
 const LanguageClientDispatcher = require("./languageClientDispatcher");
@@ -52,6 +52,12 @@ const activate = context => {
 
     const fs = rehydrateFs(params.fs);
     console.log(fs.readdirSync(params.stats.outputPath));
+  });
+
+  dispatcher.onNotification(BCS.BROWSER_COVERAGE_COLLECTED, params => {
+    dispatcher.dispatch(BCS.BROWSER_COVERAGE_COLLECTED, params);
+
+    console.log(params.coverage);
   });
 
   dispatcher.startAll();
