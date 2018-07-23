@@ -41,7 +41,7 @@ connection.onInitialized(async params => {
 
 });
 
-connection.onNotification(WLS.WEBPACK_SERVE_BUILD_SUCCESS, ({ uri, stats }) => {
+connection.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, ({ uri, stats }) => {
   // Start running coverage
 
 });
