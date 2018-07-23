@@ -7,6 +7,15 @@
     {
       "type": "node",
       "request": "attach",
+      "name": "Attach to Code Deployment Language Server",
+      "address": "localhost",
+      "protocol": "inspector",
+      "port": 6007,
+      "outFiles": ["${workspaceRoot}/src/servers/**/*.js"]
+    },
+    {
+      "type": "node",
+      "request": "attach",
       "name": "Attach to Webpack Language Server",
       "address": "localhost",
       "protocol": "inspector",
@@ -51,6 +60,10 @@
   ],
   "compounds": [
     {
+      "name": "Client + Code Deployment Server",
+      "configurations": ["Launch Extension", "Attach to Code Deployment Language Server"]
+    },
+    {
       "name": "Client + Webpack Server",
       "configurations": ["Launch Extension", "Attach to Webpack Language Server"]
     },
@@ -64,6 +77,7 @@
         "Launch Extension",
         "Attach to Browser Coverage Server",
         "Attach to Webpack Language Server",
+        "Attach to Code Deployment Language Server",
         "Attach to Webpack Production Server"
       ]
     }
