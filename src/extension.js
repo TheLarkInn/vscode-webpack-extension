@@ -1,7 +1,8 @@
-const { WLS } = require("./events");
+const { BCS, WLS } = require("./events");
 const { rehydrateFs } = require("./fsUtils");
 const vscode = require("vscode");
 const LanguageClientDispatcher = require("./languageClientDispatcher");
+const ModulesProvider = require("./treeviews/modulesProvider");
 
 /** @typedef {import('webpack/lib/Compiler.js')} Compiler */
 /** @typedef {import('webpack/lib/Stats.js')} Stats */
@@ -53,6 +54,17 @@ const activate = context => {
     const fs = rehydrateFs(params.fs);
     console.log(fs.readdirSync(params.stats.outputPath));
   });
+
+  dispatcher.onNotification(BCS.BROWSER_COVERAGE_COLLECTED, params => {
+    dispatcher.dispatch(BCS.BROWSER_COVERAGE_COLLECTED, params);
+
+    console.log(params.coverage);
+  });
+
+  // @ts-ignore
+  const modulesProvider = new ModulesProvider(workspace, context, dispatcher);
+  vscode.window.registerTreeDataProvider("builtModules", modulesProvider);
+  vscode.window.createTreeView("builtModulesView", { treeDataProvider: modulesProvider });
 
   dispatcher.startAll();
 };
