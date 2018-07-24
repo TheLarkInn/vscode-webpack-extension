@@ -68,8 +68,8 @@ connection.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, async params =>
     const coverage = await getCoverage("http://127.0.0.1:8080", browser);
     console.log(coverage);
     connection.sendNotification(BCS.BROWSER_COVERAGE_COLLECTED, { coverage });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     connection.sendNotification(BCS.BROWSER_COVERAGE_ERROR, { error });
   }
 });

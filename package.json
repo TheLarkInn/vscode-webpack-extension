@@ -50,9 +50,9 @@
       }
     ],
     "views": {
-      "built-modules": [
+      "explorer": [
         {
-          "id": "builtModules",
+          "id": "builtModulesView",
           "name": "Built Modules Explorer"
         }
       ]
