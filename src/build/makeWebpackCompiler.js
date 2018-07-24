@@ -48,7 +48,8 @@ const makeWebpackCompiler = (contextPath, mode) => {
     mode,
     watch: mode === "development",
     resolve: { modules },
-    resolveLoader: { modules }
+    resolveLoader: { modules },
+    devtool: mode === "development" ? "eval" : "source-map"
   });
 
   return { compiler: webpack(compilerOptions), config: compilerOptions };

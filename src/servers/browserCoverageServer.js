@@ -4,7 +4,8 @@ const { DidChangeConfigurationNotification, TextDocuments, ProposedFeatures, cre
 const puppeteer = require("puppeteer");
 const whichChrome = require("which-chrome");
 const getCoverage = require("../getCoverage");
-const { BCS, WLS } = require("../events");
+const { BCS, WLS, CDS } = require("../events");
+const defaultURI = "https://vscodesandbox.blob.core.windows.net";
 
 let connection = createConnection(ProposedFeatures.all);
 let documents = new TextDocuments();
@@ -19,6 +20,7 @@ let workspaceUri;
 let chromiumPath = whichChrome.Chrome;
 let puppetteerInstance;
 let browser;
+let productionHash;
 let page;
 
 connection.onInitialize(params => {
@@ -63,9 +65,13 @@ connection.onInitialized(async params => {
   }
 });
 
-connection.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, async params => {
+connection.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, params => {
+  productionHash = params.stats.hash;
+});
+
+connection.onNotification(CDS.CODE_DEPLOYMENT_SUCCESS, async () => {
   try {
-    const coverage = await getCoverage("http://127.0.0.1:8080", browser);
+    const coverage = await getCoverage(`${defaultURI}/${productionHash}/index.html`, browser);
     console.log(coverage);
     connection.sendNotification(BCS.BROWSER_COVERAGE_COLLECTED, { coverage });
   } catch (error) {

@@ -1,4 +1,4 @@
-const { BCS, WLS } = require("./events");
+const { BCS, WLS, CDS } = require("./events");
 const { rehydrateFs } = require("./fsUtils");
 const vscode = require("vscode");
 const LanguageClientDispatcher = require("./languageClientDispatcher");
@@ -59,6 +59,12 @@ const activate = context => {
     dispatcher.dispatch(BCS.BROWSER_COVERAGE_COLLECTED, params);
 
     console.log(params.coverage);
+  });
+
+  dispatcher.onNotification(CDS.CODE_DEPLOYMENT_SUCCESS, () => {
+    dispatcher.dispatch(CDS.CODE_DEPLOYMENT_SUCCESS, {});
+
+    console.log("Deploy Successful", arguments);
   });
 
   dispatcher.startAll();
