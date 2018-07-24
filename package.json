@@ -47,7 +47,15 @@
         "command": "extension.webpackServe",
         "title": "Webpack Serve"
       }
-    ]
+    ],
+    "views": {
+      "built-modules": [
+        {
+          "id": "builtModules",
+          "name": "Built Modules Explorer"
+        }
+      ]
+    }
   },
   "scripts": {
     "postinstall": "node ./node_modules/vscode/bin/install"
