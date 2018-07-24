@@ -2,10 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const { rehydrateFs } = require("../fsUtils");
 const { DidChangeConfigurationNotification, TextDocuments, ProposedFeatures, createConnection } = require("vscode-languageserver");
-const { WLS } = require("../events");
+const { WLS, CDS } = require("../events");
 
 const storage = require('azure-storage');
-const AZURE_STORAGE_CONNECTION_STRING="AZURE STORAGE CONNECTION STRING"
+const AZURE_STORAGE_CONNECTION_STRING= "<Azure Storage Connection String"
 const blobService = storage.createBlobService(AZURE_STORAGE_CONNECTION_STRING);
 
 let connection = createConnection(ProposedFeatures.all);
@@ -47,22 +47,38 @@ connection.onInitialized(async params => {
 
 
 connection.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, (params, issuer) => {
+  connection.sendNotification(CDS.CODE_DEPLYMENT_STARTED, { });
   const fs = rehydrateFs(params.fs);
-  console.log(fs.readdirSync(params.stats.outputPath));
 
   // create blob is it doesnt exist
-  createContainer(params.stats.hash).then(function() {
-    //loop through files in fs, and upload
-    for (var file in params.stats.assets) {
-      var meta = params.stats.assets[file];
-      var f = fs.readFileSync(path.join(params.stats.outputPath, meta.name))
-      upload(params.stats.hash, meta.name, f.data.toString(), meta.size).then().catch(function(e) {
-        console.log(e);
-      });
-    }
-  }).catch(function(e) {
-    console.log(e);
-  });
+  createContainer(params.stats.hash).
+    then(function(m) {
+
+      console.log(m.message);
+
+      //loop through files in fs, and upload
+      var fileUploadPromises = [];
+      for (const file of params.stats.assets) {
+        let b = new Buffer(fs.readFileSync(path.join(params.stats.outputPath, file.name)))
+        fileUploadPromises.push( upload(params.stats.hash, file.name, b)
+                            .then(function(m) {
+                              console.log(m.message)
+                            }
+                            ).catch(function(error) {
+                              console.log(error);
+                            })
+        )
+      }
+
+      Promise.all(fileUploadPromises)
+        .then(function() {
+          console.log("All files uploaded")
+          connection.sendNotification(CDS.CODE_DEPLOYMENT_SUCCESS, { });
+        });
+    }).catch(function(error) {
+      console.log(error);
+      connection.sendNotification(CDS.CODE_DEPLOYMENT_ERROR);
+    });
 });
 
 const createContainer = (containerName) => {
@@ -77,9 +93,19 @@ const createContainer = (containerName) => {
   });
 };
 
-const upload = (containerName, blobName, blobText, length) => {
+const upload = (containerName, blobName, buffer) => {
   return new Promise((resolve, reject) => {
-      blobService.createBlockBlobFromText(containerName, blobName, blobText, err => {
+      var text;
+      var contentType;
+      if(path.extname(blobName) === '.jpeg') {
+        contentType = 'image/jpg'
+        text = buffer.toString('binary')
+      } else {
+        contentType = 'text/html'
+        text = buffer.toString()
+      }
+
+      blobService.createBlockBlobFromText(containerName, blobName, text, { contentSettings: { contentType: contentType } }, err => {
           if (err) {
               reject(err);
           } else {

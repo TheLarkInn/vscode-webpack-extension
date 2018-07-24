@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { DidChangeConfigurationNotification, TextDocuments, ProposedFeatures, createConnection } = require("vscode-languageserver");
 const puppeteer = require("puppeteer");
+const { CDS } = require("../events");
 
 let connection = createConnection(ProposedFeatures.all);
 let documents = new TextDocuments();
@@ -73,8 +74,9 @@ connection.onInitialized(async params => {
   }
 });
 
-connection.onNotification("Build Finished", ({ uri, stats }) => {
+connection.onNotification(CDS.CODE_DEPLOYMENT_SUCCESS, ({ uri, stats }) => {
   // Start running coverage
+  console.log("Deployment complete - start diag");
 });
 
 connection.listen();
