@@ -76,14 +76,18 @@ connection.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, (params, issuer
           connection.sendNotification(CDS.CODE_DEPLOYMENT_SUCCESS, { });
         });
     }).catch(function(error) {
-      console.log(error);
-      connection.sendNotification(CDS.CODE_DEPLOYMENT_ERROR);
+      console.log(error.message);
+      if(error.code === "ContainerAlreadyExists") {
+        connection.sendNotification(CDS.CODE_DEPLOYMENT_SUCCESS);
+      }else {
+        connection.sendNotification(CDS.CODE_DEPLOYMENT_ERROR);
+      }
     });
 });
 
 const createContainer = (containerName) => {
   return new Promise((resolve, reject) => {
-      blobService.createContainerIfNotExists(containerName, { publicAccessLevel: 'blob' }, err => {
+      blobService.createContainer(containerName, { publicAccessLevel: 'blob' }, err => {
           if(err) {
               reject(err);
           } else {
