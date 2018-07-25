@@ -58,7 +58,9 @@ const activate = context => {
   dispatcher.onNotification(BCS.BROWSER_COVERAGE_COLLECTED, params => {
     dispatcher.dispatch(BCS.BROWSER_COVERAGE_COLLECTED, params);
 
-    console.log(params.coverage);
+    const { coverage, unminifiedCoverage } = params;
+
+    console.log(coverage, unminifiedCoverage);
   });
 
   dispatcher.onNotification(CDS.CODE_DEPLOYMENT_SUCCESS, () => {
