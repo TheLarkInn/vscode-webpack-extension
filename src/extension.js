@@ -11,7 +11,12 @@ const ModulesProvider = require("./treeviews/modulesProvider");
 const {
   workspace,
   window: { showErrorMessage, showInformationMessage },
-  commands: { registerCommand }
+  commands: { registerCommand },
+  languages,
+  Diagnostic,
+  Uri,
+  DiagnosticSeverity,
+  Range
 } = vscode;
 
 let webpackLanguageClient;
@@ -59,8 +64,26 @@ const activate = context => {
     dispatcher.dispatch(BCS.BROWSER_COVERAGE_COLLECTED, params);
 
     const { coverage, unminifiedCoverage } = params;
+    const diagnostics = [];
+    const unusedCodeDiagnosticsCollection = languages.createDiagnosticCollection("Unused JavaScript");
 
-    console.log(coverage, unminifiedCoverage);
+    workspace.onDidSaveTextDocument(e => {
+      unusedCodeDiagnosticsCollection.clear();
+    });
+
+    unminifiedCoverage.forEach(u => {
+      u.uncoveredMappings.forEach(um => {
+        let range = new Range(um.mapping.originalLine - 1, 0, um.mapping.originalLine, 0);
+        let diagnostic = new Diagnostic(
+          range,
+          "This line of code is unused during your initial page load. This means you can lazy-load this export using the dynamic `import()` statement!",
+          DiagnosticSeverity.Warning
+        );
+        unusedCodeDiagnosticsCollection.set(Uri.file(um.mapping.source.replace("webpack:///", `${workspace.rootPath}/`)), [diagnostic]);
+      });
+    });
+
+    console.log(coverage, unminifiedCoverage, Diagnostic, Range, workspace);
   });
 
   dispatcher.onNotification(CDS.CODE_DEPLOYMENT_SUCCESS, () => {

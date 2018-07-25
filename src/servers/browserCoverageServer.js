@@ -1,11 +1,13 @@
 const fs = require("fs");
-const { rehydrateFs } = require("../fsUtils");
 const path = require("path");
-const { SourceMapConsumer } = require("source-map");
-const { DidChangeConfigurationNotification, TextDocuments, ProposedFeatures, createConnection } = require("vscode-languageserver");
 const puppeteer = require("puppeteer");
 const whichChrome = require("which-chrome");
+const { SourceMapConsumer } = require("source-map");
+const { DidChangeConfigurationNotification, TextDocuments, ProposedFeatures, createConnection } = require("vscode-languageserver");
+const uniqBy = require("lodash.uniqby");
+
 const getCoverage = require("../getCoverage");
+const { rehydrateFs } = require("../fsUtils");
 const { BCS, WLS, CDS } = require("../events");
 const defaultURI = "https://vscodesandbox.blob.core.windows.net";
 
@@ -149,8 +151,10 @@ const getUnminifiedCoverageRecords = async coverages => {
  */
 const getUnminifiedPositionFromCoverageRecord = async (originalSourceName, coverageRecord) => {
   let unminifiedRanges = [];
-
   let mappings = [];
+  let mappingsBySource;
+  var uncoveredMappings = [];
+
   const rawMap = builtMaps.get(`${originalSourceName}.map`);
   try {
     const consumer = await new SourceMapConsumer(rawMap);
@@ -160,23 +164,106 @@ const getUnminifiedPositionFromCoverageRecord = async (originalSourceName, cover
       }
     });
 
+    mappingsBySource = groupToMap(mappings, "source");
+
     coverageRecord.ranges.forEach(range => {
       let { start, end } = range;
       let [newStart, newEnd] = [start, end].map(column => {
         return consumer.originalPositionFor({ line: 1, column });
       });
+
       if (newStart.source === "webpack:///webpack/bootstrap" && newEnd.source !== "webpack:///webpack/bootstrap") {
         newStart.line = 0;
       }
+
+      // Handle beginning of the coverage report
+      if (typeof newStart.line === "number" && newEnd.line === null) {
+        newEnd.line;
+      }
+
       unminifiedRanges.push({ start: newStart, end: newEnd });
     });
 
     const realSourceRanges = unminifiedRanges.filter(({ start, end }) => {
-      return [start, end].some(offset => offset.source !== "webpack:///webpack/bootstrap");
+      return [start, end].some(offset => offset.source !== "webpack:///webpack/bootstrap" || offset.source !== null);
     });
 
-    return Object.assign(coverageRecord, { unminifiedRanges: realSourceRanges });
+    mappingsBySource.forEach((mappingsArray, sourceName, index) => {
+      mappingsArray.forEach(mapping => {
+        if (!isMappingCovered(mapping, realSourceRanges)) {
+          console.log(lastBuildStats);
+          let module = getModuleFromMapping(lastBuildStats.modules, mapping);
+          let mappedSourceString = module.source.split(/\n/)[mapping.originalLine - 1];
+          uncoveredMappings.push({ mapping, mappedSourceString });
+        }
+      });
+    });
+
+    let uniqUncoveredMappings = uniqBy(uncoveredMappings, ({ mapping: { source, originalLine } }) => {
+      return `${source}:${originalLine}`;
+    });
+
+    return Object.assign(coverageRecord, {
+      unminifiedRanges: realSourceRanges,
+      uncoveredMappings: uniqUncoveredMappings
+    });
   } catch (error) {
     console.log(error);
   }
+};
+
+/**
+ * @template T
+ * @param {T[]} items
+ * @param {keyof T} key
+ * @returns {Map<keyof T, T[]>}
+ */
+const groupToMap = (items, key) => {
+  const map = new Map();
+  items.forEach(item => {
+    if (map.has(item[key])) {
+      map.set(item[key], [...(map.get(item[key]) || []), item]);
+    } else {
+      map.set(item[key], [item]);
+    }
+  });
+
+  return map;
+};
+
+/**
+ * @returns {boolean}
+ */
+const isMappingCovered = ({ source, originalLine }, coveredSourceRanges) => {
+  let isCovered = false;
+
+  coveredSourceRanges.forEach(({ start, end }) => {
+    if (start.source === null) {
+      start.line = 0;
+    }
+
+    if (end.source === source) {
+      isCovered = originalLine > start.line && originalLine <= end.line;
+    } else {
+      isCovered = false;
+    }
+  });
+
+  return isCovered;
+};
+
+const getModuleFromMapping = (modules, mapping) => {
+  return [].concat(...modules.map(m => m.modules || [])).find(m => m.name.endsWith(mapping.source.replace("webpack:///", "")));
+};
+
+/**
+ * @template T
+ * @param {T[]} myArr
+ * @param {keyof T} prop
+ * @returns {T[]}
+ */
+const uniq = (myArr, prop) => {
+  return myArr.filter((obj, pos, arr) => {
+    return arr.map(mapObj => mapObj[prop]).indexOf(obj[prop]) === pos;
+  });
 };
