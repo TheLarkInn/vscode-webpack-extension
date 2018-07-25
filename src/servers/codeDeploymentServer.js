@@ -96,19 +96,20 @@ const createContainer = containerName => {
   });
 };
 
+const contentTypes = {
+  ".html":"text/html",
+  ".jpeg": "text/jpeg",
+  ".css": "text/css",
+  ".js": "application/javascript"
+};
+
 const upload = (containerName, blobName, buffer) => {
   return new Promise((resolve, reject) => {
-    var text;
-    var contentType;
-    if (path.extname(blobName) === ".jpeg") {
-      contentType = "image/jpg";
-      text = buffer.toString("base64");
-    } else {
-      contentType = "text/html";
-      text = buffer.toString();
-    }
-
-    blobService.createBlockBlobFromText(containerName, blobName, text, { contentSettings: { contentType: contentType } }, err => {
+    let ext = path.extname(blobName);
+    let text = ext === ".jpeg" ? buffer : buffer.toString(); 
+    let contentSettings = { contentSettings: { contentType: contentTypes[ext] } }; 
+ 
+    blobService.createBlockBlobFromText(containerName, blobName, text, contentSettings, err => {
       if (err) {
         reject(err);
       } else {
