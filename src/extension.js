@@ -69,9 +69,9 @@ const activate = context => {
 
   dispatcher.startAll();
   // @ts-ignore
-  // const modulesProvider = new ModulesProvider(workspace, context, dispatcher);
-  // vscode.window.registerTreeDataProvider("builtModulesView", modulesProvider);
-  // vscode.window.createTreeView("builtModulesView", { treeDataProvider: modulesProvider });
+  const modulesProvider = new ModulesProvider(workspace, context, dispatcher);
+  vscode.window.registerTreeDataProvider("builtModulesView", modulesProvider);
+  vscode.window.createTreeView("builtModulesView", { treeDataProvider: modulesProvider });
 };
 
 /**
