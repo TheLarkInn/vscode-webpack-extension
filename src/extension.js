@@ -94,7 +94,9 @@ const activate = context => {
     vscode.window
     .showInformationMessage("Deployment successful!", 'Open in Browser')
     .then(selection => {
-      vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`${defaultURI}/${lastKnowGoodHash}/index.html`))
+      if (selection === 'Open in Browser') {
+        vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`${defaultURI}/${lastKnowGoodHash}/index.html`))
+      }
     });
   });
 
