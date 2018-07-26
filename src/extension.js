@@ -77,9 +77,11 @@ const activate = context => {
   vscode.window.createTreeView("builtModulesView", { treeDataProvider: modulesProvider });
 
   context.subscriptions.push(vscode.commands.registerCommand('extension.deploy', () => {
-    // open browser to lkg url
-    console.log(`Open browser to ${defaultURI}/${lastKnowGoodHash}/index.html`);
-    vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`${defaultURI}/${lastKnowGoodHash}/index.html`))
+    if (lastKnowGoodHash !== undefined) {
+      // open browser to lkg url
+      console.log(`Open browser to ${defaultURI}/${lastKnowGoodHash}/index.html`);
+      vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`${defaultURI}/${lastKnowGoodHash}/index.html`))
+    }
   }));
 };
 
