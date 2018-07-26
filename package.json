@@ -35,6 +35,7 @@
   "main": "./src/extension.js",
   "activationEvents": [
     "onCommand:extension.sayHello",
+    "onCommand:extension.deploy",
     "workspaceContains:**/webpack.config.js",
     "workspaceContains:./src/index.js",
     "onLanguage:javascript",
@@ -49,6 +50,10 @@
       {
         "command": "extension.webpackServe",
         "title": "Webpack Serve"
+      },
+      {
+        "command": "extension.deploy",
+        "title": "Deploy build and launch browser"
       }
     ],
     "views": {

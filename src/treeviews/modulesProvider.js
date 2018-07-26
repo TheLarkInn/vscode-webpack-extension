@@ -20,6 +20,7 @@ module.exports = class ModulesProvider {
     this.outputPath = "";
 
     dispatcher.onNotification(WLS.WEBPACK_SERVE_BUILD_SUCCESS, params => {
+      dispatcher.dispatch(WLS.WEBPACK_SERVE_BUILD_SUCCESS, params);
       const { stats } = params;
 
       this._modules = stats.modules;

@@ -24,6 +24,9 @@ let browserCoverageClient;
 let webpackProductionClient;
 let codeDeploymentClient;
 
+let lastKnowGoodHash;
+const defaultURI = "https://vscodesandbox.blob.core.windows.net"; 
+
 /**
  * @param {vscode.ExtensionContext} context
  */
@@ -49,7 +52,6 @@ const activate = context => {
     dispatcher.dispatch(WLS.WEBPACK_SERVE_BUILD_SUCCESS, params);
 
     const { stats } = params;
-
     console.log(params);
   });
 
@@ -58,6 +60,7 @@ const activate = context => {
 
     const fs = rehydrateFs(params.fs);
     console.log(fs.readdirSync(params.stats.outputPath));
+    lastKnowGoodHash = params.stats.hash;
   });
 
   dispatcher.onNotification(BCS.BROWSER_COVERAGE_COLLECTED, params => {
@@ -94,9 +97,17 @@ const activate = context => {
 
   dispatcher.startAll();
   // @ts-ignore
-  // const modulesProvider = new ModulesProvider(workspace, context, dispatcher);
-  // vscode.window.registerTreeDataProvider("builtModulesView", modulesProvider);
-  // vscode.window.createTreeView("builtModulesView", { treeDataProvider: modulesProvider });
+  const modulesProvider = new ModulesProvider(workspace, context, dispatcher);
+  vscode.window.registerTreeDataProvider("builtModulesView", modulesProvider);
+  vscode.window.createTreeView("builtModulesView", { treeDataProvider: modulesProvider });
+
+  context.subscriptions.push(vscode.commands.registerCommand('extension.deploy', () => {
+    if (lastKnowGoodHash !== undefined) {
+      // open browser to lkg url
+      console.log(`Open browser to ${defaultURI}/${lastKnowGoodHash}/index.html`);
+      vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`${defaultURI}/${lastKnowGoodHash}/index.html`))
+    }
+  }));
 };
 
 /**
