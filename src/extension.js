@@ -43,11 +43,31 @@ const activate = context => {
     webpackProductionClient
   );
 
+  dispatcher.onNotification(WLS.WEBPACK_SERVE_STARTED, (params, issuer) => {
+    dispatcher.dispatch(WLS.WEBPACK_SERVE_STARTED, params);
+
+    vscode.window.setStatusBarMessage("Webpack build started");
+  });
+
+  dispatcher.onNotification(WLS.WEBPACK_SERVE_BUILD_ERROR, (params, issuer) => {
+    dispatcher.dispatch(WLS.WEBPACK_SERVE_BUILD_ERROR, params);
+
+    vscode.window.setStatusBarMessage("Webpack build failed");
+  });
+
   dispatcher.onNotification(WLS.WEBPACK_SERVE_BUILD_SUCCESS, (params, issuer) => {
     dispatcher.dispatch(WLS.WEBPACK_SERVE_BUILD_SUCCESS, params);
 
     const { stats } = params;
     console.log(params);
+
+    vscode.window.setStatusBarMessage("Serve build successful");
+  });
+
+  dispatcher.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_ERROR, (params, issuer) => {
+    dispatcher.dispatch(WLS.WEBPACK_CONFIG_PROD_BUILD_ERROR, params);
+
+    vscode.window.setStatusBarMessage("Production build failed");
   });
 
   dispatcher.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, (params, issuer) => {
@@ -57,7 +77,7 @@ const activate = context => {
     console.log(fs.readdirSync(params.stats.outputPath));
     lastKnowGoodHash = params.stats.hash;
 
-    vscode.window.showInformationMessage("Production build successful!");
+    vscode.window.setStatusBarMessage("Production build successful");
   });
 
   dispatcher.onNotification(BCS.BROWSER_COVERAGE_COLLECTED, params => {
@@ -72,11 +92,17 @@ const activate = context => {
     console.log("Deploy Successful", arguments);
 
     vscode.window
-    .showInformationMessage("Deployment uccessful!", 'Open in Browser')
+    .showInformationMessage("Deployment successful!", 'Open in Browser')
     .then(selection => {
       vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`${defaultURI}/${lastKnowGoodHash}/index.html`))
     });
   });
+
+  dispatcher.onNotification(CDS.CODE_DEPLOYMENT_ERROR, () => {
+    dispatcher.dispatch(CDS.CODE_DEPLOYMENT_ERROR, {});
+
+    vscode.window.showErrorMessage("Deployment failed");
+  })
 
   dispatcher.startAll();
   // @ts-ignore
