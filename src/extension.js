@@ -56,6 +56,8 @@ const activate = context => {
     const fs = rehydrateFs(params.fs);
     console.log(fs.readdirSync(params.stats.outputPath));
     lastKnowGoodHash = params.stats.hash;
+
+    vscode.window.showInformationMessage("Production build successful!");
   });
 
   dispatcher.onNotification(BCS.BROWSER_COVERAGE_COLLECTED, params => {
@@ -68,6 +70,12 @@ const activate = context => {
     dispatcher.dispatch(CDS.CODE_DEPLOYMENT_SUCCESS, {});
 
     console.log("Deploy Successful", arguments);
+
+    vscode.window
+    .showInformationMessage("Deployment uccessful!", 'Open in Browser')
+    .then(selection => {
+      vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`${defaultURI}/${lastKnowGoodHash}/index.html`))
+    });
   });
 
   dispatcher.startAll();
