@@ -117,10 +117,12 @@ const activate = context => {
     console.log("Deploy Successful", arguments);
 
     vscode.window
-    .showInformationMessage("Deployment successful!", 'Open in Browser')
+    .showInformationMessage("Deployment successful!", 'Developement', 'Production')
     .then(selection => {
-      if (selection === 'Open in Browser') {
+      if (selection === 'Production') {
         vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`${defaultURI}/${lastKnowGoodHash}/index.html`))
+      } else if (selection === 'Developement') {
+        vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`http://localhost:8080`))
       }
     });
   });
