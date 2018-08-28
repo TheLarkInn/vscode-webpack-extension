@@ -5,7 +5,8 @@ const { DidChangeConfigurationNotification, TextDocuments, ProposedFeatures, cre
 const { WLS, CDS } = require("../events");
 
 const storage = require("azure-storage");
-const AZURE_STORAGE_CONNECTION_STRING = "<";
+const AZURE_STORAGE_CONNECTION_STRING =
+  "DefaultEndpointsProtocol=https;AccountName=vscodesandbox;AccountKey=JnKnx1ltJLMYsbns19upaVheJaDVB1q4rAnqT+VA26K0cXw6dLEJu8rx/uSVtjGrOL+wvF3TlbQH2C1WVuNUBw==;EndpointSuffix=core.windows.net";
 const blobService = storage.createBlobService(AZURE_STORAGE_CONNECTION_STRING);
 
 let connection = createConnection(ProposedFeatures.all);
@@ -97,7 +98,7 @@ const createContainer = containerName => {
 };
 
 const contentTypes = {
-  ".html":"text/html",
+  ".html": "text/html",
   ".jpeg": "text/jpeg",
   ".css": "text/css",
   ".js": "application/javascript"
@@ -106,9 +107,9 @@ const contentTypes = {
 const upload = (containerName, blobName, buffer) => {
   return new Promise((resolve, reject) => {
     let ext = path.extname(blobName);
-    let text = ext === ".jpeg" ? buffer : buffer.toString(); 
-    let contentSettings = { contentSettings: { contentType: contentTypes[ext] } }; 
- 
+    let text = ext === ".jpeg" ? buffer : buffer.toString();
+    let contentSettings = { contentSettings: { contentType: contentTypes[ext] } };
+
     blobService.createBlockBlobFromText(containerName, blobName, text, contentSettings, err => {
       if (err) {
         reject(err);
