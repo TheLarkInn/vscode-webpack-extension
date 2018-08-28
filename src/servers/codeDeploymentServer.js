@@ -1,12 +1,22 @@
 const fs = require("fs");
 const path = require("path");
-const { rehydrateFs } = require("../fsUtils");
-const { DidChangeConfigurationNotification, TextDocuments, ProposedFeatures, createConnection } = require("vscode-languageserver");
-const { WLS, CDS } = require("../events");
+const {
+  rehydrateFs
+} = require("../fsUtils");
+const {
+  DidChangeConfigurationNotification,
+  TextDocuments,
+  ProposedFeatures,
+  createConnection
+} = require("vscode-languageserver");
+const {
+  WLS,
+  CDS
+} = require("../events");
 
 const storage = require("azure-storage");
 const AZURE_STORAGE_CONNECTION_STRING =
-  "DefaultEndpointsProtocol=https;AccountName=vscodesandbox;AccountKey=JnKnx1ltJLMYsbns19upaVheJaDVB1q4rAnqT+VA26K0cXw6dLEJu8rx/uSVtjGrOL+wvF3TlbQH2C1WVuNUBw==;EndpointSuffix=core.windows.net";
+  "<";
 const blobService = storage.createBlobService(AZURE_STORAGE_CONNECTION_STRING);
 
 let connection = createConnection(ProposedFeatures.all);
@@ -24,7 +34,11 @@ let browser;
 let page;
 
 connection.onInitialize(params => {
-  const { capabilities, rootPath, rootUri } = params;
+  const {
+    capabilities,
+    rootPath,
+    rootUri
+  } = params;
   workspacePath = rootPath;
   workspaceUri = rootUri;
 
@@ -47,12 +61,12 @@ connection.onInitialized(async params => {
 });
 
 connection.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, (params, issuer) => {
-  connection.sendNotification(CDS.CODE_DEPLYMENT_STARTED, {});
+  connection.sendNotification(CDS.CODE_DEPLOYMENT_STARTED, {});
   const fs = rehydrateFs(params.fs);
 
   // create blob is it doesnt exist
   createContainer(params.stats.hash)
-    .then(function(m) {
+    .then(function (m) {
       console.log(m.message);
 
       //loop through files in fs, and upload
@@ -61,21 +75,21 @@ connection.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, (params, issuer
         let b = new Buffer(fs.readFileSync(path.join(params.stats.outputPath, file.name)));
         fileUploadPromises.push(
           upload(params.stats.hash, file.name, b)
-            .then(function(m) {
-              console.log(m.message);
-            })
-            .catch(function(error) {
-              console.log(error);
-            })
+          .then(function (m) {
+            console.log(m.message);
+          })
+          .catch(function (error) {
+            console.log(error);
+          })
         );
       }
 
-      Promise.all(fileUploadPromises).then(function() {
+      Promise.all(fileUploadPromises).then(function () {
         console.log("All files uploaded");
         connection.sendNotification(CDS.CODE_DEPLOYMENT_SUCCESS, {});
       });
     })
-    .catch(function(error) {
+    .catch(function (error) {
       console.log(error.message);
       if (error.code === "ContainerAlreadyExists") {
         connection.sendNotification(CDS.CODE_DEPLOYMENT_SUCCESS);
@@ -87,11 +101,15 @@ connection.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, (params, issuer
 
 const createContainer = containerName => {
   return new Promise((resolve, reject) => {
-    blobService.createContainer(containerName, { publicAccessLevel: "blob" }, err => {
+    blobService.createContainer(containerName, {
+      publicAccessLevel: "blob"
+    }, err => {
       if (err) {
         reject(err);
       } else {
-        resolve({ message: `Container '${containerName}' created` });
+        resolve({
+          message: `Container '${containerName}' created`
+        });
       }
     });
   });
@@ -108,13 +126,19 @@ const upload = (containerName, blobName, buffer) => {
   return new Promise((resolve, reject) => {
     let ext = path.extname(blobName);
     let text = ext === ".jpeg" ? buffer : buffer.toString();
-    let contentSettings = { contentSettings: { contentType: contentTypes[ext] } };
+    let contentSettings = {
+      contentSettings: {
+        contentType: contentTypes[ext]
+      }
+    };
 
     blobService.createBlockBlobFromText(containerName, blobName, text, contentSettings, err => {
       if (err) {
         reject(err);
       } else {
-        resolve({ message: `Upload of '${blobName}' complete` });
+        resolve({
+          message: `Upload of '${blobName}' complete`
+        });
       }
     });
   });

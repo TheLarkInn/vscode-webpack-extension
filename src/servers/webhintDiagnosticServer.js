@@ -1,8 +1,18 @@
 const fs = require("fs");
 const path = require("path");
-const { rehydrateFs } = require("../fsUtils");
-const { DidChangeConfigurationNotification, TextDocuments, ProposedFeatures, createConnection } = require("vscode-languageserver");
-const { WLS, CDS } = require("../events");
+const {
+  rehydrateFs
+} = require("../fsUtils");
+const {
+  DidChangeConfigurationNotification,
+  TextDocuments,
+  ProposedFeatures,
+  createConnection
+} = require("vscode-languageserver");
+const {
+  WLS,
+  CDS
+} = require("../events");
 
 let connection = createConnection(ProposedFeatures.all);
 let documents = new TextDocuments();
@@ -19,7 +29,11 @@ let browser;
 let page;
 
 connection.onInitialize(params => {
-  const { capabilities, rootPath, rootUri } = params;
+  const {
+    capabilities,
+    rootPath,
+    rootUri
+  } = params;
   workspacePath = rootPath;
   workspaceUri = rootUri;
 
@@ -38,5 +52,9 @@ connection.onInitialize(params => {
 });
 
 connection.onInitialized(async params => {
-  console.log("initialize");
+  console.log("initialized");
+});
+
+connection.onNotification(CDS.CODE_DEPLOYMENT_SUCCESS, async () => {
+
 });
