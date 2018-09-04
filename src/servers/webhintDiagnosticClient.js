@@ -13,15 +13,28 @@ const { LanguageClient, TransportKind } = require("vscode-languageclient");
  */
 const create = (workspace, context) => {
   const serverModule = context.asAbsolutePath(path.join("src", "servers", "webhintDiagnosticServer.js"));
-  const debugOptions = { execArgv: ["--nolazy", "--inspect=6010"] };
+  const debugOptions = {
+    execArgv: ["--nolazy", "--inspect=6011"]
+  };
   /** @type {ServerOptions} */
   const serverOptions = {
-    run: { module: serverModule, transport: TransportKind.ipc },
-    debug: { module: serverModule, transport: TransportKind.ipc, options: debugOptions }
+    run: {
+      module: serverModule,
+      transport: TransportKind.ipc
+    },
+    debug: {
+      module: serverModule,
+      transport: TransportKind.ipc,
+      options: debugOptions
+    }
   };
   /** @type {LanguageClientOptions} */
   const clientOptions = {
-    documentSelector: [{ scheme: "file" }]
+    documentSelector: [
+      {
+        scheme: "file"
+      }
+    ]
   };
 
   const client = new LanguageClient("webhint", "Webhint Diagnostic Server", serverOptions, clientOptions);

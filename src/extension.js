@@ -1,11 +1,5 @@
-const {
-  BCS,
-  WLS,
-  CDS
-} = require("./events");
-const {
-  rehydrateFs
-} = require("./fsUtils");
+const { BCS, WLS, CDS } = require("./events");
+const { rehydrateFs } = require("./fsUtils");
 const vscode = require("vscode");
 const LanguageClientDispatcher = require("./languageClientDispatcher");
 const ModulesProvider = require("./treeviews/modulesProvider");
@@ -16,13 +10,8 @@ const ModulesProvider = require("./treeviews/modulesProvider");
 
 const {
   workspace,
-  window: {
-    showErrorMessage,
-    showInformationMessage
-  },
-  commands: {
-    registerCommand
-  }
+  window: { showErrorMessage, showInformationMessage },
+  commands: { registerCommand }
 } = vscode;
 
 let webpackLanguageClient;
@@ -93,9 +82,7 @@ const activate = context => {
       });
     }
 
-    const {
-      stats
-    } = params;
+    const { stats } = params;
     modulesProvider.refresh(stats.modules);
   });
 

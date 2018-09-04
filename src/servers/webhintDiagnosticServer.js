@@ -1,5 +1,7 @@
 const fs = require("fs");
 const path = require("path");
+const runWebhints = require("../utils/runWebhints");
+
 const {
   rehydrateFs
 } = require("../fsUtils");
@@ -9,6 +11,7 @@ const {
   ProposedFeatures,
   createConnection
 } = require("vscode-languageserver");
+
 const {
   WLS,
   CDS
@@ -19,6 +22,8 @@ let documents = new TextDocuments();
 let hasConfigurationCapability = false;
 let hasWorkspaceFolderCapability = false;
 let hasDiagnosticRelatedInformationCapability = false;
+// TODO: Remove this duplication
+const defaultURI = "https://vscodesandbox.blob.core.windows.net";
 
 /** @type {string=} */
 let workspacePath;
@@ -27,6 +32,10 @@ let workspaceUri;
 /** @type {string=} */
 let browser;
 let page;
+let productionHash;
+let engine;
+let resources;
+let config;
 
 connection.onInitialize(params => {
   const {
@@ -34,6 +43,7 @@ connection.onInitialize(params => {
     rootPath,
     rootUri
   } = params;
+
   workspacePath = rootPath;
   workspaceUri = rootUri;
 
@@ -51,10 +61,23 @@ connection.onInitialize(params => {
   };
 });
 
-connection.onInitialized(async params => {
-  console.log("initialized");
+connection.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, params => {
+  productionHash = params.stats.hash;
 });
+
+connection.onInitialized(params => {});
 
 connection.onNotification(CDS.CODE_DEPLOYMENT_SUCCESS, async () => {
+  const productionUrl = `${defaultURI}/${productionHash}/index.html`;
+  console.log(productionUrl);
+  try {
+    const problems = await runWebhints(productionUrl);
 
+    console.log(productionUrl, problems);
+  } catch (err) {
+    console.error(err);
+  }
 });
+
+connection.listen();
+documents.listen(connection);

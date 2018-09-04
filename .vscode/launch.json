@@ -41,6 +41,15 @@
       "outFiles": ["${workspaceRoot}/src/servers/**/*.js"]
     },
     {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Webhint Diagnostic Server",
+      "address": "localhost",
+      "protocol": "inspector",
+      "port": 6011,
+      "outFiles": ["${workspaceRoot}/src/servers/**/*.js"]
+    },
+    {
       "type": "extensionHost",
       "request": "launch",
       "name": "Launch Extension",
@@ -67,13 +76,18 @@
       "configurations": ["Launch Extension", "Attach to Webpack Production Server"]
     },
     {
+      "name": "Client + Webhint Diagnostic Server",
+      "configurations": ["Launch Extension", "Attach to Webhint Diagnostic Server"]
+    },
+    {
       "name": "All",
       "configurations": [
         "Launch Extension",
         "Attach to Browser Coverage Server",
         "Attach to Webpack Language Server",
         "Attach to Code Deployment Language Server",
-        "Attach to Webpack Production Server"
+        "Attach to Webpack Production Server",
+        "Attach to Webhint Diagnostic Server"
       ]
     }
   ]
