@@ -2,20 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const runWebhints = require("../utils/runWebhints");
 
-const {
-  rehydrateFs
-} = require("../fsUtils");
-const {
-  DidChangeConfigurationNotification,
-  TextDocuments,
-  ProposedFeatures,
-  createConnection
-} = require("vscode-languageserver");
+const { rehydrateFs } = require("../fsUtils");
+const { DidChangeConfigurationNotification, TextDocuments, ProposedFeatures, createConnection } = require("vscode-languageserver");
 
-const {
-  WLS,
-  CDS
-} = require("../events");
+const { WLS, CDS } = require("../events");
 
 let connection = createConnection(ProposedFeatures.all);
 let documents = new TextDocuments();
@@ -38,11 +28,7 @@ let resources;
 let config;
 
 connection.onInitialize(params => {
-  const {
-    capabilities,
-    rootPath,
-    rootUri
-  } = params;
+  const { capabilities, rootPath, rootUri } = params;
 
   workspacePath = rootPath;
   workspaceUri = rootUri;
@@ -73,7 +59,7 @@ connection.onNotification(CDS.CODE_DEPLOYMENT_SUCCESS, async () => {
   try {
     const problems = await runWebhints(productionUrl);
 
-    console.log(productionUrl, problems);
+    console.error(productionUrl, problems);
   } catch (err) {
     console.error(err);
   }
