@@ -23,9 +23,11 @@ let webpackLanguageClient;
 let browserCoverageClient;
 let webpackProductionClient;
 let codeDeploymentClient;
+let webhintDiagnosticClient;
 
 let lastKnowGoodHash;
-const defaultURI = "https://vscodesandbox.blob.core.windows.net"; 
+const defaultURI = "https://vscodesandbox.blob.core.windows.net";
+let devBuildNotificationShown = false;
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -35,44 +37,62 @@ const activate = context => {
   const bcc = require("./servers/browserCoverageClient");
   const wpc = require("./servers/webpackProductionClient");
   const cdc = require("./servers/codeDeploymentClient");
+  const wdc = require("./servers/webhintDiagnosticClient.js");
+
+  const deployStatus = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+
+  deployStatus.command = "extension.deploy";
+  context.subscriptions.push(deployStatus);
 
   webpackLanguageClient = wlc.create(workspace, context);
   browserCoverageClient = bcc.create(workspace, context);
   webpackProductionClient = wpc.create(workspace, context);
   codeDeploymentClient = cdc.create(workspace, context);
+  webhintDiagnosticClient = wdc.create(workspace, context);
 
   const dispatcher = new LanguageClientDispatcher(
     webpackLanguageClient,
     browserCoverageClient,
     codeDeploymentClient,
-    webpackProductionClient
+    webpackProductionClient,
+    webhintDiagnosticClient
   );
 
   dispatcher.onNotification(WLS.WEBPACK_SERVE_STARTED, (params, issuer) => {
     dispatcher.dispatch(WLS.WEBPACK_SERVE_STARTED, params);
 
-    vscode.window.setStatusBarMessage("Webpack build started");
+    deployStatus.text = "Webpack build started";
+    deployStatus.command = "";
+    deployStatus.show();
   });
 
   dispatcher.onNotification(WLS.WEBPACK_SERVE_BUILD_ERROR, (params, issuer) => {
     dispatcher.dispatch(WLS.WEBPACK_SERVE_BUILD_ERROR, params);
 
-    vscode.window.setStatusBarMessage("Webpack build failed");
+    vscode.window.showErrorMessage("Webpack build failed");
   });
 
   dispatcher.onNotification(WLS.WEBPACK_SERVE_BUILD_SUCCESS, (params, issuer) => {
     dispatcher.dispatch(WLS.WEBPACK_SERVE_BUILD_SUCCESS, params);
 
-    const { stats } = params;
-    console.log(params);
+    deployStatus.text = "Webpack build complete";
 
-    vscode.window.setStatusBarMessage("Serve build successful");
+    // show a notification that the developer build is ready
+    if (!this.devBuildNotificationShown) {
+      this.devBuildNotificationShown = true;
+      vscode.window.showInformationMessage(" 🏗 Developer build successful! 🏗", "View in Browser").then(selection => {
+        if (selection === "View in Browser") {
+          vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(`http://localhost:8080`));
+        }
+      });
+    }
+
+    const { stats } = params;
+    modulesProvider.refresh(stats.modules);
   });
 
   dispatcher.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_ERROR, (params, issuer) => {
     dispatcher.dispatch(WLS.WEBPACK_CONFIG_PROD_BUILD_ERROR, params);
-
-    vscode.window.setStatusBarMessage("Production build failed");
   });
 
   dispatcher.onNotification(WLS.WEBPACK_CONFIG_PROD_BUILD_SUCCESS, (params, issuer) => {
@@ -81,8 +101,6 @@ const activate = context => {
     const fs = rehydrateFs(params.fs);
     console.log(fs.readdirSync(params.stats.outputPath));
     lastKnowGoodHash = params.stats.hash;
-
-    vscode.window.setStatusBarMessage("Production build successful");
   });
 
   dispatcher.onNotification(BCS.BROWSER_COVERAGE_COLLECTED, params => {
@@ -114,38 +132,35 @@ const activate = context => {
   dispatcher.onNotification(CDS.CODE_DEPLOYMENT_SUCCESS, () => {
     dispatcher.dispatch(CDS.CODE_DEPLOYMENT_SUCCESS, {});
 
-    console.log("Deploy Successful", arguments);
-
-    vscode.window
-    .showInformationMessage("Deployment successful!", 'Developement', 'Production')
-    .then(selection => {
-      if (selection === 'Production') {
-        vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`${defaultURI}/${lastKnowGoodHash}/index.html`))
-      } else if (selection === 'Developement') {
-        vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`http://localhost:8080`))
-      }
-    });
+    deployStatus.text = "🚀 Production Deployment Complete 🚀";
+    deployStatus.tooltip = "View in browser";
+    deployStatus.command = "extension.deploy";
+    deployStatus.show();
   });
 
   dispatcher.onNotification(CDS.CODE_DEPLOYMENT_ERROR, () => {
     dispatcher.dispatch(CDS.CODE_DEPLOYMENT_ERROR, {});
 
     vscode.window.showErrorMessage("Deployment failed");
-  })
+  });
 
   dispatcher.startAll();
   // @ts-ignore
   const modulesProvider = new ModulesProvider(workspace, context, dispatcher);
   vscode.window.registerTreeDataProvider("builtModulesView", modulesProvider);
-  vscode.window.createTreeView("builtModulesView", { treeDataProvider: modulesProvider });
+  vscode.window.createTreeView("builtModulesView", {
+    treeDataProvider: modulesProvider
+  });
 
-  context.subscriptions.push(vscode.commands.registerCommand('extension.deploy', () => {
-    if (lastKnowGoodHash !== undefined) {
-      // open browser to lkg url
-      console.log(`Open browser to ${defaultURI}/${lastKnowGoodHash}/index.html`);
-      vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`${defaultURI}/${lastKnowGoodHash}/index.html`))
-    }
-  }));
+  context.subscriptions.push(
+    vscode.commands.registerCommand("extension.deploy", () => {
+      if (lastKnowGoodHash !== undefined) {
+        // open browser to lkg url
+        console.log(`Open browser to ${defaultURI}/${lastKnowGoodHash}/index.html`);
+        vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(`${defaultURI}/${lastKnowGoodHash}/index.html`));
+      }
+    })
+  );
 };
 
 /**

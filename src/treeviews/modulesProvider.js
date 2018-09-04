@@ -18,17 +18,10 @@ module.exports = class ModulesProvider {
     this.rootPath = this._workspace.rootPath;
     this.onDidChangeTreeData = this._onDidChangeTreeData.event;
     this.outputPath = "";
-
-    dispatcher.onNotification(WLS.WEBPACK_SERVE_BUILD_SUCCESS, params => {
-      dispatcher.dispatch(WLS.WEBPACK_SERVE_BUILD_SUCCESS, params);
-      const { stats } = params;
-
-      this._modules = stats.modules;
-      this.refresh();
-    });
   }
 
-  refresh(newModules) {
+  refresh(modules) {
+    this._modules = modules;
     this._onDidChangeTreeData.fire();
   }
 
