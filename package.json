@@ -4,7 +4,7 @@
   "license": "MIT",
   "dependencies": {
     "@hint/configuration-progressive-web-apps": "^1.1.0",
-    "@hint/connector-chrome": "^1.0.1",
+    "@hint/connector-chrome": "^1.0.2",
     "@hint/connector-jsdom": "^1.0.3",
     "@hint/connector-local": "^1.0.1",
     "@types/async": "^2.0.49",

@@ -1,15 +1,7 @@
-const {
-  URL
-} = require("url");
-const {
-  Configuration
-} = require("hint/dist/src/lib/config");
-const {
-  Engine
-} = require("hint");
-const {
-  loadResources
-} = require("hint/dist/src/lib/utils/resource-loader");
+const { URL } = require("url");
+const { Configuration } = require("hint/dist/src/lib/config");
+const { Engine } = require("hint");
+const { loadResources } = require("hint/dist/src/lib/utils/resource-loader");
 
 /**
  * @param {string} url
@@ -19,7 +11,10 @@ async function getProblemsForUrl(url) {
     // @ts-ignore
     const config = Configuration.fromConfig({
       connector: {
-        name: "chrome"
+        name: "chrome",
+        options: {
+          flags: ["--headless"]
+        }
       },
       extends: ["web-recommended"]
     });

@@ -71,7 +71,7 @@ connection.onInitialized(async params => {
   try {
     browser = await puppeteer.launch({
       executablePath: chromiumPath,
-      args: ["--remote-debugging-port=9222"]
+      args: ["--remote-debugging-port=9222", "--headless"]
     });
     console.log(browser);
   } catch (error) {
