@@ -12,12 +12,18 @@ const {
   workspace,
   window: { showErrorMessage, showInformationMessage },
   commands: { registerCommand },
+  languages,
+  Diagnostic,
+  Uri,
+  DiagnosticSeverity,
+  Range
 } = vscode;
 
 let webpackLanguageClient;
 let browserCoverageClient;
 let webpackProductionClient;
 let codeDeploymentClient;
+let webhintDiagnosticClient;
 
 let lastKnowGoodHash;
 const defaultURI = "https://vscodesandbox.blob.core.windows.net";
@@ -31,8 +37,10 @@ const activate = context => {
   const bcc = require("./servers/browserCoverageClient");
   const wpc = require("./servers/webpackProductionClient");
   const cdc = require("./servers/codeDeploymentClient");
+  const wdc = require("./servers/webhintDiagnosticClient.js");
 
   const deployStatus = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+
   deployStatus.command = "extension.deploy";
   context.subscriptions.push(deployStatus);
 
@@ -40,18 +48,20 @@ const activate = context => {
   browserCoverageClient = bcc.create(workspace, context);
   webpackProductionClient = wpc.create(workspace, context);
   codeDeploymentClient = cdc.create(workspace, context);
+  webhintDiagnosticClient = wdc.create(workspace, context);
 
   const dispatcher = new LanguageClientDispatcher(
     webpackLanguageClient,
     browserCoverageClient,
     codeDeploymentClient,
-    webpackProductionClient
+    webpackProductionClient,
+    webhintDiagnosticClient
   );
 
   dispatcher.onNotification(WLS.WEBPACK_SERVE_STARTED, (params, issuer) => {
     dispatcher.dispatch(WLS.WEBPACK_SERVE_STARTED, params);
 
-    deployStatus.text = "Webpack build started"
+    deployStatus.text = "Webpack build started";
     deployStatus.command = "";
     deployStatus.show();
   });
@@ -65,16 +75,14 @@ const activate = context => {
   dispatcher.onNotification(WLS.WEBPACK_SERVE_BUILD_SUCCESS, (params, issuer) => {
     dispatcher.dispatch(WLS.WEBPACK_SERVE_BUILD_SUCCESS, params);
 
-    deployStatus.text = "Webpack build complete"
+    deployStatus.text = "Webpack build complete";
 
     // show a notification that the developer build is ready
     if (!this.devBuildNotificationShown) {
       this.devBuildNotificationShown = true;
-      vscode.window
-      .showInformationMessage(" 🏗 Developer build successful! 🏗", 'View in Browser')
-      .then(selection => {
-        if (selection === 'View in Browser') {
-          vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`http://localhost:8080`))
+      vscode.window.showInformationMessage(" 🏗 Developer build successful! 🏗", "View in Browser").then(selection => {
+        if (selection === "View in Browser") {
+          vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(`http://localhost:8080`));
         }
       });
     }
@@ -98,7 +106,27 @@ const activate = context => {
   dispatcher.onNotification(BCS.BROWSER_COVERAGE_COLLECTED, params => {
     dispatcher.dispatch(BCS.BROWSER_COVERAGE_COLLECTED, params);
 
-    console.log(params.coverage);
+    const { coverage, unminifiedCoverage } = params;
+    const diagnostics = [];
+    const unusedCodeDiagnosticsCollection = languages.createDiagnosticCollection("Unused JavaScript");
+
+    workspace.onDidSaveTextDocument(e => {
+      unusedCodeDiagnosticsCollection.clear();
+    });
+
+    unminifiedCoverage.forEach(u => {
+      u.uncoveredMappings.forEach(um => {
+        let range = new Range(um.mapping.originalLine - 1, 0, um.mapping.originalLine, 0);
+        let diagnostic = new Diagnostic(
+          range,
+          "This line of code is unused during your initial page load. This means you can lazy-load this export using the dynamic `import()` statement!",
+          DiagnosticSeverity.Warning
+        );
+        unusedCodeDiagnosticsCollection.set(Uri.file(um.mapping.source.replace("webpack:///", `${workspace.rootPath}/`)), [diagnostic]);
+      });
+    });
+
+    console.log(coverage, unminifiedCoverage, Diagnostic, Range, workspace);
   });
 
   dispatcher.onNotification(CDS.CODE_DEPLOYMENT_SUCCESS, () => {
@@ -114,21 +142,25 @@ const activate = context => {
     dispatcher.dispatch(CDS.CODE_DEPLOYMENT_ERROR, {});
 
     vscode.window.showErrorMessage("Deployment failed");
-  })
+  });
 
   dispatcher.startAll();
   // @ts-ignore
   const modulesProvider = new ModulesProvider(workspace, context, dispatcher);
   vscode.window.registerTreeDataProvider("builtModulesView", modulesProvider);
-  vscode.window.createTreeView("builtModulesView", { treeDataProvider: modulesProvider });
+  vscode.window.createTreeView("builtModulesView", {
+    treeDataProvider: modulesProvider
+  });
 
-  context.subscriptions.push(vscode.commands.registerCommand('extension.deploy', () => {
-    if (lastKnowGoodHash !== undefined) {
-      // open browser to lkg url
-      console.log(`Open browser to ${defaultURI}/${lastKnowGoodHash}/index.html`);
-      vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(`${defaultURI}/${lastKnowGoodHash}/index.html`))
-    }
-  }));
+  context.subscriptions.push(
+    vscode.commands.registerCommand("extension.deploy", () => {
+      if (lastKnowGoodHash !== undefined) {
+        // open browser to lkg url
+        console.log(`Open browser to ${defaultURI}/${lastKnowGoodHash}/index.html`);
+        vscode.commands.executeCommand("vscode.open", vscode.Uri.parse(`${defaultURI}/${lastKnowGoodHash}/index.html`));
+      }
+    })
+  );
 };
 
 /**
